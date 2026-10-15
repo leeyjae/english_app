@@ -68,44 +68,44 @@ if "cart" not in st.session_state:
 
 st.markdown('<p class="eyebrow">English shopping practice</p>', unsafe_allow_html=True)
 st.title("🛍️ Let's Shop!")
-st.write("물건을 사고파는 영어 대화를 연습해 봐요.")
+st.write("Practice English conversations for buying and selling items.")
 
 if st.session_state.role is None:
-    st.subheader("어떤 역할을 연습할까요?")
+    st.subheader("Which role would you like to practice?")
     buyer, seller = st.columns(2)
     with buyer:
         with st.container(border=True):
             st.subheader("🧑‍💼 Buyer")
-            st.write("가격을 확인하고 사고 싶은 물건을 골라요.")
-            if st.button("구매자 선택하기", use_container_width=True):
+            st.write("Check your budget and choose the items you want to buy.")
+            if st.button("Choose Buyer", use_container_width=True):
                 st.session_state.role = "buyer"
                 st.session_state.cart = {}
                 st.rerun()
     with seller:
         with st.container(border=True):
             st.subheader("🧑‍🍳 Seller")
-            st.write("예산 안에서 물건을 골라 구매 리스트를 만들어요.")
-            if st.button("판매자 선택하기", use_container_width=True):
+            st.write("Choose items and build a shopping list while staying within your budget.")
+            if st.button("Choose Seller", use_container_width=True):
                 st.session_state.role = "seller"
                 st.session_state.cart = {}
                 st.rerun()
 else:
     role = st.session_state.role
-    heading = "구매자" if role == "buyer" else "판매자"
+    heading = "Buyer" if role == "buyer" else "Seller"
 
-    if st.button("← 역할 선택으로 돌아가기"):
+    if st.button("← Back to role selection"):
         st.session_state.role = None
         st.session_state.cart = {}
         st.rerun()
 
-    st.subheader(f"{'🧑‍💼' if role == 'buyer' else '🧑‍🍳'} {heading} 화면")
+    st.subheader(f"{'🧑‍💼' if role == 'buyer' else '🧑‍🍳'} {heading} View")
     if role == "buyer":
-        st.info("💰 구매 가능 예산: **₩2,000**")
-        st.caption("물건의 가격은 표시되지 않아요.")
+        st.info("💰 Available budget: **₩2,000**")
+        st.caption("Item prices are hidden.")
     else:
-        st.caption("물건의 종류와 가격을 확인해 보세요.")
+        st.caption("Review the available items and their prices.")
 
-    st.markdown("### 물건 고르기")
+    st.markdown("### Choose Items")
     columns = st.columns(3)
     for index, item in enumerate(ITEMS):
         with columns[index % 3]:
@@ -116,7 +116,7 @@ else:
                 else:
                     st.write("&nbsp;", unsafe_allow_html=True)
                 if st.button(
-                    "구매 리스트에 담기",
+                    "Add to Shopping List",
                     key=f"add_{role}_{item['name']}",
                     use_container_width=True,
                 ):
@@ -124,19 +124,19 @@ else:
                     cart[item["name"]] = cart.get(item["name"], 0) + 1
                     st.rerun()
 
-    st.markdown("### 🧺 구매 리스트")
+    st.markdown("### 🧺 Shopping List")
     cart = st.session_state.cart
     if not cart:
-        st.write("아직 담은 물건이 없어요. 위에서 물건을 골라 보세요.")
+        st.write("Your list is empty. Choose some items above to get started.")
     else:
         for item in ITEMS:
             quantity = cart.get(item["name"], 0)
             if quantity:
                 name_column, quantity_column, remove_column = st.columns([5, 2, 2])
                 name_column.write(f"{item['emoji']} **{item['name']}**")
-                quantity_column.write(f"수량: {quantity}")
+                quantity_column.write(f"Quantity: {quantity}")
                 if remove_column.button(
-                    "하나 빼기",
+                    "Remove One",
                     key=f"remove_{role}_{item['name']}",
                     use_container_width=True,
                 ):
@@ -145,6 +145,13 @@ else:
                     else:
                         cart[item["name"]] = quantity - 1
                     st.rerun()
+
+    if role == "seller":
+        total = sum(
+            item["price"] * cart.get(item["name"], 0)
+            for item in ITEMS
+        )
+        st.markdown(f"### Total: ₩{total:,}")
 
     st.markdown("### 💬 Useful English")
     if role == "buyer":
