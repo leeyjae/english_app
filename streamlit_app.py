@@ -9,6 +9,7 @@ ITEMS = [
     {"name": "Eggs", "emoji": "🥚", "price": 1_500},
     {"name": "Juice", "emoji": "🧃", "price": 800},
 ]
+BUDGET = 2_000
 
 st.set_page_config(page_title="Let's Shop! | English Practice", page_icon="🛍️")
 
@@ -100,11 +101,17 @@ else:
 
     st.subheader(f"{'🧑‍💼' if role == 'buyer' else '🧑‍🍳'} {heading} View")
     if role == "buyer":
-        st.info("💰 Available budget: **₩2,000**")
+        st.info(f"💰 Available budget: **₩{BUDGET:,}**")
         st.caption("Item prices are hidden.")
     else:
+        st.info(f"💰 Budget: **₩{BUDGET:,}**")
         st.caption("Review the available items and their prices.")
 
+    cart = st.session_state.cart
+    cart_total = sum(
+        item["price"] * cart.get(item["name"], 0)
+        for item in ITEMS
+    )
     st.markdown("### Choose Items")
     columns = st.columns(3)
     for index, item in enumerate(ITEMS):
@@ -120,12 +127,38 @@ else:
                     key=f"add_{role}_{item['name']}",
                     use_container_width=True,
                 ):
-                    cart = st.session_state.cart
-                    cart[item["name"]] = cart.get(item["name"], 0) + 1
-                    st.rerun()
+                    if cart_total + item["price"] > BUDGET:
+                        st.toast("예산을 초과해서 담을 수 없어요.", icon="❌")
+                        st.iframe(
+                            """
+                            <script>
+                            const AudioContextClass =
+                                window.AudioContext || window.webkitAudioContext;
+                            if (AudioContextClass) {
+                                const audioContext = new AudioContextClass();
+                                const oscillator = audioContext.createOscillator();
+                                const gain = audioContext.createGain();
+                                oscillator.type = "square";
+                                oscillator.frequency.value = 880;
+                                gain.gain.value = 0.08;
+                                oscillator.connect(gain);
+                                gain.connect(audioContext.destination);
+                                audioContext.resume().then(() => {
+                                    oscillator.start();
+                                    oscillator.stop(audioContext.currentTime + 0.12);
+                                    oscillator.onended = () => audioContext.close();
+                                });
+                            }
+                            </script>
+                            """,
+                            height=1,
+                            alt="Budget limit alert sound",
+                        )
+                    else:
+                        cart[item["name"]] = cart.get(item["name"], 0) + 1
+                        st.rerun()
 
     st.markdown("### 🧺 Shopping List")
-    cart = st.session_state.cart
     if not cart:
         st.write("Your list is empty. Choose some items above to get started.")
     else:
@@ -147,11 +180,7 @@ else:
                     st.rerun()
 
     if role == "seller":
-        total = sum(
-            item["price"] * cart.get(item["name"], 0)
-            for item in ITEMS
-        )
-        st.markdown(f"### Total: ₩{total:,}")
+        st.markdown(f"### Total: ₩{cart_total:,}")
 
     st.markdown("### 💬 Useful English")
     if role == "buyer":
